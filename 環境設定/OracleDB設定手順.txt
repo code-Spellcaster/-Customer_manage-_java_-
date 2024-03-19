@@ -1,0 +1,103 @@
+【ユーザ作成手順】
+①｢SQLコマンドラインの実行｣を起動する
+②以下を入力する
+
+SQL> connect
+ユーザー名を入力してください:
+system
+パスワードを入力してください:
+{インストール時に設定したパスワード}
+
+SQL> CREATE USER customermanager identified by customer DEFAULT TABLESPACE users TEMPORARY TABLESPACE temp;
+SQL> GRANT CONNECT, RESOURCE, DBA to customermanager;
+SQL> exit
+
+
+
+【テーブルインポート手順】
+①｢SQLコマンドラインの実行｣を起動する
+②以下を入力する
+SQL> connect
+ユーザー名を入力してください:
+customermanager
+パスワードを入力してください:
+customer
+
+SQL> @C:\…\user_table.sql
+SQL> @C:\…\customer_table.sql
+SQL> exit
+
+※テーブルを再作成する場合は、以下を入力して、テーブルを一旦削除し、
+　上記のテーブルインポート手順を行う。
+
+SQL> @C:\…\drop_user_table.sql
+SQL> @C:\…\drop_customer_table.sql
+
+
+
+【DBMS_CRYPTOを使用可能にする】
+①｢SQLコマンドラインの実行｣を起動する
+②以下を入力する
+
+SQL> connect sys as sysdba
+ユーザー名を入力してください:
+system
+パスワードを入力してください:
+{インストール時に設定したパスワード}
+
+SQL> GRANT EXECUTE on DBMS_CRYPTO to customermanager;
+SQL> exit
+
+
+
+【暗号化/複合化ファンクションの作成】
+①｢SQLコマンドラインの実行｣を起動する
+②以下を入力する
+SQL> connect
+ユーザー名を入力してください:
+customermanager
+パスワードを入力してください:
+customer
+
+SQL> @C:\…\pwd_decrypt,pwd_encrypt.sql
+
+③以下を入力し動作確認する
+※参考URL
+　https://www.shift-the-oracle.com/plsql/dbms_crypto/encrypt-decrypt.html
+
+
+※ログインユーザテーブルのレコードから暗号化されたパスワードを取得しそのまま表示する。
+SQL> select pwd from login_user;
+
+PWD
+------------------------------------------------------------
+gclU2Vf6aETm4uAuaRsw8g==
+RMWS4TvVM46gWXvI+ESiig==
+9kDKfaIle0keqYyXiTMx4A==
+
+
+※ログインユーザテーブルのレコードから暗号化されたパスワードを取得し、pwd_decryptで復号して表示する。
+　｢'SECPWD'｣は復号化に使用するキー。
+SQL> select pwd_decrypt(pwd,'SECPWD') from login_user;
+
+PWD_DECRYPT(PWD,'SECPWD')
+--------------------------------------------------------------------------------
+admin
+ichiro
+jiro
+
+
+※ログインユーザテーブルのレコードから暗号化されたパスワードを取得し、pwd_decryptで復号し、
+　更にpwd_encryptで暗号化して表示する。
+　｢'SECPWD'｣は復号化･暗号化に使用するキー。
+SQL> select pwd_encrypt(pwd_decrypt(pwd, 'SECPWD'),'SECPWD') from login_user;
+
+PWD_ENCRYPT(PWD_DECRYPT(PWD,'SECPWD'),'SECPWD')
+--------------------------------------------------------------------------------
+gclU2Vf6aETm4uAuaRsw8g==
+RMWS4TvVM46gWXvI+ESiig==
+9kDKfaIle0keqYyXiTMx4A==
+
+
+SQL> exit
+
